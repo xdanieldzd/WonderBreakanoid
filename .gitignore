@@ -1,0 +1,6 @@
+build/
+.cache/
+
+*.wsc
+compile_commands.json
+desktop.ini
