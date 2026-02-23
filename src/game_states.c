@@ -122,6 +122,8 @@ void game_main_score_table_init(void)
 	game_work->do_process_text_sprites = 1;
 
 	game_load_graphics(game_work->graphics = 0);
+	game_load_background(game_work->background = 2);
+
 	game_clear_screen_with_border();
 
 	game_fade_in_from(FADE_MODE_WHITE, 25, 16, NULL);
@@ -182,6 +184,7 @@ void game_main_gameplay(void)
 		*WS_DISPLAY_COLOR_MEM(0) = WS_RGB(0, 15, 0);
 		for (uint8_t i = 0; i < GAME_BRICKS_MAX_COUNT; i++)
 			game_work->bricks[i].is_alive = 0;
+		game_work->score += 1000;
 		game_update_bricks();
 	}
 
@@ -359,7 +362,7 @@ void game_main_score_entry_init(void)
 	game_work->do_process_text_sprites = 1;
 
 	game_load_graphics(game_work->graphics = 0);
-	game_load_background(game_work->background = 0);
+	game_load_background(game_work->background = 2);
 
 	memcpy(game_work->score_entry.name_entry, sram_empty_hiscore_name, sizeof(char) * SRAM_HISCORE_NAME_LENGTH);
 

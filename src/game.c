@@ -107,6 +107,8 @@ void game_fade_in_from(const uint8_t mode, const uint8_t divider, const uint8_t 
 		fade_palette_load(0, gfx_game_background_1_palette);
 	else if (game_work->background == 1)
 		fade_palette_load(0, gfx_game_background_2_palette);
+	else if (game_work->background == 2)
+		fade_palette_load(0, gfx_game_background_3_palette);
 
 	fade_data.state = FADE_STATE_IN;
 	fade_data.mode = mode;
@@ -152,6 +154,11 @@ void game_load_background(uint8_t background)
 	{
 		ws_gdma_copy(WS_TILE_4BPP_MEM(0x100), gfx_game_background_2_tiles, gfx_game_background_2_tiles_size);
 		ws_gdma_copy(&wse_screen1, gfx_game_background_2_map, gfx_game_background_2_map_size);
+	}
+	else if (background == 2)
+	{
+		ws_gdma_copy(WS_TILE_4BPP_MEM(0x100), gfx_game_background_3_tiles, gfx_game_background_3_tiles_size);
+		ws_gdma_copy(&wse_screen1, gfx_game_background_3_map, gfx_game_background_3_map_size);
 	}
 }
 
