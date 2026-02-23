@@ -29,6 +29,7 @@ void game_init(void)
 	game_work = calloc(sizeof(game), 1);
 	game_work->random_seed = SRAM_CHECKSUM_SEED;
 
+	game_work->current_state = GAME_STATE_STARTUP;
 	game_work->debug_enable = 0;
 
 	ws_int_set_handler(WS_INT_VBLANK, game_vblank_int_handler);

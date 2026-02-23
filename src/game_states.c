@@ -22,23 +22,35 @@
 
 const __far state_function game_main_functions[] =
 {
-	game_main_init,
-	game_main_init_title, game_main_title,
-	game_main_init_scores, game_main_scores,
-	game_main_new_game, game_main_enter_game, game_main_ingame, game_main_win, game_main_lose, game_main_check_next_level,
-	game_main_init_score_entry, game_main_score_entry
+	game_main_startup,
+	game_main_title_screen_init,
+	game_main_title_screen,
+	game_main_score_table_init,
+	game_main_score_table,
+	game_main_gameplay_init,
+	game_main_gameplay,
+	game_main_next_level_init,
+	game_main_next_level,
+	game_main_score_entry_init,
+	game_main_score_entry
 };
 
 const __far state_function game_draw_functions[] =
 {
-	game_draw_init,
-	game_draw_init_title, game_draw_title,
-	game_draw_init_scores, game_draw_scores,
-	game_draw_new_game, game_draw_enter_game, game_draw_ingame, game_draw_win, game_draw_lose, game_draw_check_next_level,
-	game_draw_init_score_entry, game_draw_score_entry
+	game_draw_startup,
+	game_draw_title_screen_init,
+	game_draw_title_screen,
+	game_draw_score_table_init,
+	game_draw_score_table,
+	game_draw_gameplay_init,
+	game_draw_gameplay,
+	game_draw_next_level_init,
+	game_draw_next_level,
+	game_draw_score_entry_init,
+	game_draw_score_entry
 };
 
-void game_main_init(void)
+void game_main_startup(void)
 {
 	ws_gdma_copy(WS_TILE_4BPP_MEM(0x000), gfx_main_font_tiles, gfx_main_font_tiles_size);
 
@@ -46,18 +58,18 @@ void game_main_init(void)
 
 	game_work->sram_was_damaged = sram_init();
 
-	game_work->next_state = GAME_STATE_INIT_TITLE;
+	game_work->next_state = GAME_STATE_TITLE_SCREEN_INIT;
 
 #if GAME_STATES_DEBUG_HISCORE_ENTRY != 0
 	game_work->has_round_ended = 1;
 	game_work->player_has_won = 1;
 	game_work->score = 42069;
-	game_work->level = 2;
-	game_work->next_state = GAME_STATE_CHECK_NEXT_LEVEL;
+	game_work->level = 5;
+	game_work->next_state = GAME_STATE_NEXT_LEVEL;
 #endif
 }
 
-void game_main_init_title(void)
+void game_main_title_screen_init(void)
 {
 	game_work->do_process_text_sprites = 1;
 
@@ -68,10 +80,10 @@ void game_main_init_title(void)
 
 	game_fade_in_from(FADE_MODE_WHITE, 25, 16, NULL);
 
-	game_work->next_state = GAME_STATE_TITLE;
+	game_work->next_state = GAME_STATE_TITLE_SCREEN;
 }
 
-void game_main_title(void)
+void game_main_title_screen(void)
 {
 	if ((game_work->buttons.held & GAME_DEBUG_ENABLE_KEYS) == GAME_DEBUG_ENABLE_KEYS)
 	{
@@ -86,7 +98,7 @@ void game_main_title(void)
 			game_work->do_process_text_sprites = 0;
 
 			game_fade_out_to(FADE_MODE_WHITE, 25, 16, NULL);
-			game_work->next_state = GAME_STATE_NEW_GAME;
+			game_work->next_state = GAME_STATE_GAMEPLAY_INIT;
 		}
 
 		if (game_work->buttons.pressed & WS_KEY_Y3)
@@ -94,7 +106,7 @@ void game_main_title(void)
 			game_work->do_process_text_sprites = 0;
 
 			game_fade_out_to(FADE_MODE_WHITE, 25, 16, NULL);
-			game_work->next_state = GAME_STATE_INIT_SCORES;
+			game_work->next_state = GAME_STATE_SCORE_TABLE_INIT;
 		}
 
 		if (game_work->debug_enable && (game_work->buttons.pressed & GAME_SRAM_RESET_KEYS) == GAME_SRAM_RESET_KEYS)
@@ -105,7 +117,7 @@ void game_main_title(void)
 	}
 }
 
-void game_main_init_scores(void)
+void game_main_score_table_init(void)
 {
 	game_work->do_process_text_sprites = 1;
 
@@ -114,44 +126,39 @@ void game_main_init_scores(void)
 
 	game_fade_in_from(FADE_MODE_WHITE, 25, 16, NULL);
 
-	game_work->next_state = GAME_STATE_SCORES;
+	game_work->next_state = GAME_STATE_SCORE_TABLE;
 }
 
-void game_main_scores(void)
+void game_main_score_table(void)
 {
 	if (game_work->buttons.pressed & (WS_KEY_Y3 | WS_KEY_START))
 	{
 		game_work->do_process_text_sprites = 0;
 
 		game_fade_out_to(FADE_MODE_WHITE, 25, 16, NULL);
-		game_work->next_state = GAME_STATE_INIT_TITLE;
+		game_work->next_state = GAME_STATE_TITLE_SCREEN_INIT;
 	}
 }
 
-void game_main_new_game(void)
+void game_main_gameplay_init(void)
 {
+	game_work->do_process_text_sprites = 1;
+
 	game_load_graphics(game_work->graphics = 0);
 	game_load_background(game_work->background = 0);
 
 	game_clear_field();
 	game_spawn_bricks(level_data[game_work->level]);
 
-	game_work->next_state = GAME_STATE_ENTER_GAME;
-}
-
-void game_main_enter_game(void)
-{
-	game_work->do_process_text_sprites = 1;
-
 	sram_store_to_cartridge();
 
 	game_begin();
 
 	game_fade_in_from(FADE_MODE_WHITE, 25, 16, NULL);
-	game_work->next_state = GAME_STATE_INGAME;
+	game_work->next_state = GAME_STATE_GAMEPLAY;
 }
 
-void game_main_ingame(void)
+void game_main_gameplay(void)
 {
 	if (!game_work->has_round_ended && game_work->buttons.pressed & WS_KEY_START)
 	{
@@ -180,10 +187,7 @@ void game_main_ingame(void)
 
 	if (game_work->has_round_ended)
 	{
-		if (game_work->player_has_won)
-			game_work->next_state = GAME_STATE_WIN;
-		else
-			game_work->next_state = GAME_STATE_LOSE;
+		game_work->next_state = GAME_STATE_NEXT_LEVEL_INIT;
 	}
 	else if (!game_work->is_paused)
 	{
@@ -297,29 +301,18 @@ void game_main_ingame(void)
 	}
 }
 
-void game_main_win(void)
+void game_main_next_level_init(void)
 {
 	if (game_work->buttons.pressed & WS_KEY_START)
 	{
 		game_work->do_process_text_sprites = 0;
 
 		game_fade_out_to(FADE_MODE_WHITE, 25, 16, NULL);
-		game_work->next_state = GAME_STATE_CHECK_NEXT_LEVEL;
+		game_work->next_state = GAME_STATE_NEXT_LEVEL;
 	}
 }
 
-void game_main_lose(void)
-{
-	if (game_work->buttons.pressed & WS_KEY_START)
-	{
-		game_work->do_process_text_sprites = 0;
-
-		game_fade_out_to(FADE_MODE_WHITE, 25, 16, NULL);
-		game_work->next_state = GAME_STATE_CHECK_NEXT_LEVEL;
-	}
-}
-
-void game_main_check_next_level(void)
+void game_main_next_level(void)
 {
 	if (game_work->player_has_won) game_work->level++;
 	else game_work->lives--;
@@ -340,7 +333,7 @@ void game_main_check_next_level(void)
 		game_begin();
 
 		game_fade_in_from(FADE_MODE_WHITE, 25, 16, NULL);
-		game_work->next_state = GAME_STATE_INGAME;
+		game_work->next_state = GAME_STATE_GAMEPLAY;
 	}
 	else
 	{
@@ -352,16 +345,16 @@ void game_main_check_next_level(void)
 			util_generate_sprite_tile_data(game_work->score_entry.cursor_tile_data, GAME_NAME_ENTRY_CURSOR_TILE_COUNT, GAME_NAME_ENTRY_CURSOR_TILE_INDEX, GAME_NAME_ENTRY_CURSOR_PALETTE_INDEX, 1);
 			game_clear_screen_with_border();
 
-			game_work->next_state = GAME_STATE_INIT_SCORE_ENTRY;
+			game_work->next_state = GAME_STATE_SCORE_ENTRY_INIT;
 		}
 		else
 		{
-			game_work->next_state = GAME_STATE_INIT_TITLE;
+			game_work->next_state = GAME_STATE_TITLE_SCREEN_INIT;
 		}
 	}
 }
 
-void game_main_init_score_entry(void)
+void game_main_score_entry_init(void)
 {
 	game_work->do_process_text_sprites = 1;
 
@@ -381,7 +374,7 @@ void game_main_score_entry(void)
 	if (game_work->buttons.pressed & WS_KEY_Y3)
 	{
 		game_work->score_entry.is_lowercase = !game_work->score_entry.is_lowercase;
-		game_draw_init_score_entry();
+		game_draw_score_entry_init();
 	}
 
 	if (game_work->buttons.pressed & (WS_KEY_X1 | WS_KEY_X2 | WS_KEY_X3 | WS_KEY_X4))
@@ -445,7 +438,7 @@ void game_main_score_entry(void)
 			sram_store_to_cartridge();
 
 			game_fade_out_to(FADE_MODE_WHITE, 25, 16, NULL);
-			game_work->next_state = GAME_STATE_INIT_TITLE;
+			game_work->next_state = GAME_STATE_TITLE_SCREEN_INIT;
 		}
 	}
 }
@@ -456,17 +449,17 @@ void game_draw(void)
 		(*game_draw_functions[game_work->current_state])();	
 }
 
-void game_draw_init(void)
+void game_draw_startup(void)
 {
 	//
 }
 
-void game_draw_init_title(void)
+void game_draw_title_screen_init(void)
 {
 	//
 }
 
-void game_draw_title(void)
+void game_draw_title_screen(void)
 {
 	text_print(4, 4, TEXT_FLAGS_SPRITES, str_title_tagline_1);
 	text_print(WS_DISPLAY_WIDTH_PIXELS - GAME_STRING_WIDTH_PIXELS(str_title_tagline_2) - 4, 12, TEXT_FLAGS_SPRITES, str_title_tagline_2);
@@ -486,7 +479,7 @@ void game_draw_title(void)
 	if (game_work->debug_enable) text_print(0, 11, TEXT_FLAGS_BACKGROUND, str_dbg_version, build_date);
 }
 
-void game_draw_init_scores(void)
+void game_draw_score_table_init(void)
 {
 	text_print(9, 0, TEXT_FLAGS_BACKGROUND, str_hiscores_header);
 	text_print(2, 2, TEXT_FLAGS_BACKGROUND, str_hiscores_list_header);
@@ -495,23 +488,18 @@ void game_draw_init_scores(void)
 		text_print(2, (i + 4), TEXT_FLAGS_BACKGROUND, str_hiscores_score_entry, (i + 1), save->hiscores[i].score, save->hiscores[i].level, (const char __far*)&save->hiscores[i].name);
 }
 
-void game_draw_scores(void)
+void game_draw_score_table(void)
 {
 	if ((vbl_ticks % 75) >= 15)
 		text_print(GAME_MESSAGE_X_POSITION(str_hiscores_press_y3_exit), 120, TEXT_FLAGS_SPRITES, str_hiscores_press_y3_exit);
 }
 
-void game_draw_new_game(void)
+void game_draw_gameplay_init(void)
 {
 	//
 }
 
-void game_draw_enter_game(void)
-{
-	//
-}
-
-void game_draw_ingame(void)
+void game_draw_gameplay(void)
 {
 	if ((vbl_ticks % (75 * 4)) < (75 * 2))
 		text_print(1, 0, TEXT_FLAGS_BACKGROUND, str_lives, game_work->lives < 0 ? 0 :game_work->lives);
@@ -530,33 +518,33 @@ void game_draw_ingame(void)
 			sprite_set(&game_work->ball[i].position, game_work->ball[i].tile_data);
 }
 
-void game_draw_win(void)
+void game_draw_next_level_init(void)
 {
-	game_draw_ingame();
+	game_draw_gameplay();
 
-	text_print(GAME_MESSAGE_X_POSITION(str_level_complete), GAME_MESSAGE_Y_POSITION, TEXT_FLAGS_SPRITES, str_level_complete);
-	text_print(GAME_MESSAGE_X_POSITION(str_press_retry), GAME_MESSAGE_Y_POSITION + 10, TEXT_FLAGS_SPRITES, str_press_retry);
-}
-
-void game_draw_lose(void)
-{
-	game_draw_ingame();
-
-	if (game_work->lives > 0)
-		text_print(GAME_MESSAGE_X_POSITION(str_press_retry), GAME_MESSAGE_Y_POSITION, TEXT_FLAGS_SPRITES, str_press_retry);
+	if (game_work->player_has_won)
+	{
+		text_print(GAME_MESSAGE_X_POSITION(str_level_complete), GAME_MESSAGE_Y_POSITION, TEXT_FLAGS_SPRITES, str_level_complete);
+		text_print(GAME_MESSAGE_X_POSITION(str_press_retry), GAME_MESSAGE_Y_POSITION + 10, TEXT_FLAGS_SPRITES, str_press_retry);
+	}
 	else
 	{
-		text_print(GAME_MESSAGE_X_POSITION(str_game_over), GAME_MESSAGE_Y_POSITION, TEXT_FLAGS_SPRITES, str_game_over);
-		text_print(GAME_MESSAGE_X_POSITION(str_press_retry), GAME_MESSAGE_Y_POSITION + 10, TEXT_FLAGS_SPRITES, str_press_retry);
+		if (game_work->lives > 0)
+			text_print(GAME_MESSAGE_X_POSITION(str_press_retry), GAME_MESSAGE_Y_POSITION, TEXT_FLAGS_SPRITES, str_press_retry);
+		else
+		{
+			text_print(GAME_MESSAGE_X_POSITION(str_game_over), GAME_MESSAGE_Y_POSITION, TEXT_FLAGS_SPRITES, str_game_over);
+			text_print(GAME_MESSAGE_X_POSITION(str_press_retry), GAME_MESSAGE_Y_POSITION + 10, TEXT_FLAGS_SPRITES, str_press_retry);
+		}
 	}
 }
 
-void game_draw_check_next_level(void)
+void game_draw_next_level(void)
 {
 	//
 }
 
-void game_draw_init_score_entry(void)
+void game_draw_score_entry_init(void)
 {
 	text_print(5, 0, TEXT_FLAGS_BACKGROUND, str_scoreentry_header);
 	text_print(2, 2, TEXT_FLAGS_BACKGROUND, str_scoreentry_entry, game_work->score, game_work->level + 1);
