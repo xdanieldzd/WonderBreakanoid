@@ -21,8 +21,6 @@ game* game_work = NULL;
 const uint8_t __far* level_data[6] = { game_level_data_1, game_level_data_2, game_level_data_3, game_level_data_4, game_level_data_5, game_level_data_6 };
 
 const uint8_t brick_score_values[5] = { 0, 1, 2, 3, 5 };
-const char __far score_entry_character_list_upper[33] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ!?,.-+\0";
-const char __far score_entry_character_list_lower[33] = "abcdefghijklmnopqrstuvwxyz!?,.-+\0";
 
 void game_init(void)
 {
@@ -64,6 +62,8 @@ __attribute__((assume_ss_data, interrupt)) void __far game_vblank_int_handler(vo
 
 	game_work->random_seed -= ((vbl_ticks + game_work->buttons.held) << 2) | ((game_work->random_seed >> 2) & 0x03);
 	srand(game_work->random_seed);
+
+	if (game_work->timer) game_work->timer--;
 
 	if (game_work->do_process_text_sprites)
 	{
@@ -162,25 +162,52 @@ void game_load_background(uint8_t background)
 	}
 }
 
+inline static void game_draw_border_line_large_horizontal(uint8_t x, uint8_t y, uint8_t width)
+{
+	for (uint8_t i = 0; x < width; x++, i++)
+	{
+		uint16_t tile_offset = i == 0 || i == width - 1 ? 0 : ((i % 2) == 0) ? 2 : 1;
+		ws_screen_put_tile(&wse_screen2, (GAME_BORDER_FIRST_TILE_INDEX + tile_offset) | WS_SCREEN_ATTR_BANK(0) | WS_SCREEN_ATTR_PALETTE(8), x, y);
+	}
+}
+
+inline static void game_draw_border_line_large_vertical(uint8_t x, uint8_t y, uint8_t height)
+{
+	for (uint8_t i = 0; y < height; y++, i++)
+	{
+		uint16_t tile_offset = i == 0 || i == height - 1 ? 0 : ((i % 2) == 0) ? 4 : 3;
+		ws_screen_put_tile(&wse_screen2, (GAME_BORDER_FIRST_TILE_INDEX + tile_offset) | WS_SCREEN_ATTR_BANK(0) | WS_SCREEN_ATTR_PALETTE(8), x, y);
+	}
+}
+
+void game_draw_border_lines(uint8_t data)
+{
+	if (data & GAME_BORDER_DRAW_LARGE)
+	{
+		if (data & GAME_BORDER_DRAW_TOP)		game_draw_border_line_large_horizontal(0, 0,						WS_DISPLAY_WIDTH_TILES);
+		if (data & GAME_BORDER_DRAW_BOTTOM)	game_draw_border_line_large_horizontal(0, WS_DISPLAY_HEIGHT_TILES - 1,	WS_DISPLAY_WIDTH_TILES);
+		if (data & GAME_BORDER_DRAW_LEFT) 	game_draw_border_line_large_vertical(0, 0,							WS_DISPLAY_HEIGHT_TILES);
+		if (data & GAME_BORDER_DRAW_RIGHT)	game_draw_border_line_large_vertical(WS_DISPLAY_WIDTH_TILES - 1, 0,	WS_DISPLAY_HEIGHT_TILES);
+	}
+	else
+	{
+		if (data & GAME_BORDER_DRAW_TOP)		ws_screen_fill_tiles(&wse_screen2, GAME_BORDER_FIRST_TILE_INDEX | WS_SCREEN_ATTR_BANK(0) | WS_SCREEN_ATTR_PALETTE(8), 0, 0,							WS_DISPLAY_WIDTH_TILES, 1);
+		if (data & GAME_BORDER_DRAW_BOTTOM)	ws_screen_fill_tiles(&wse_screen2, GAME_BORDER_FIRST_TILE_INDEX | WS_SCREEN_ATTR_BANK(0) | WS_SCREEN_ATTR_PALETTE(8), 0, WS_DISPLAY_HEIGHT_TILES - 1,	WS_DISPLAY_WIDTH_TILES, 1);
+		if (data & GAME_BORDER_DRAW_LEFT) 	ws_screen_fill_tiles(&wse_screen2, GAME_BORDER_FIRST_TILE_INDEX | WS_SCREEN_ATTR_BANK(0) | WS_SCREEN_ATTR_PALETTE(8), 0, 0,							1, WS_DISPLAY_HEIGHT_TILES);
+		if (data & GAME_BORDER_DRAW_RIGHT)	ws_screen_fill_tiles(&wse_screen2, GAME_BORDER_FIRST_TILE_INDEX | WS_SCREEN_ATTR_BANK(0) | WS_SCREEN_ATTR_PALETTE(8), WS_DISPLAY_WIDTH_TILES - 1, 0,	1, WS_DISPLAY_HEIGHT_TILES);
+	}
+}
+
 void game_clear_screen_with_border(void)
 {
 	ws_screen_fill_tiles(&wse_screen2, 0x000 | WS_SCREEN_ATTR_BANK(0) | WS_SCREEN_ATTR_PALETTE(0), 0, 0, WS_SCREEN_WIDTH_TILES, WS_SCREEN_HEIGHT_TILES);
-
-	ws_screen_fill_tiles(&wse_screen2, GAME_BORDER_FIRST_TILE_INDEX | WS_SCREEN_ATTR_BANK(0) | WS_SCREEN_ATTR_PALETTE(8), 0, 0, WS_DISPLAY_WIDTH_TILES, 1);
-	ws_screen_fill_tiles(&wse_screen2, GAME_BORDER_FIRST_TILE_INDEX | WS_SCREEN_ATTR_BANK(0) | WS_SCREEN_ATTR_PALETTE(8), 0, WS_DISPLAY_HEIGHT_TILES - 1, WS_DISPLAY_WIDTH_TILES, 1);
-	ws_screen_fill_tiles(&wse_screen2, GAME_BORDER_FIRST_TILE_INDEX | WS_SCREEN_ATTR_BANK(0) | WS_SCREEN_ATTR_PALETTE(8), 0, 1, 1, WS_DISPLAY_HEIGHT_TILES - 1);
-	ws_screen_fill_tiles(&wse_screen2, GAME_BORDER_FIRST_TILE_INDEX | WS_SCREEN_ATTR_BANK(0) | WS_SCREEN_ATTR_PALETTE(8), WS_DISPLAY_WIDTH_TILES - 1, 1, 1, WS_DISPLAY_HEIGHT_TILES - 1);
+	game_draw_border_lines(GAME_BORDER_DRAW_TOP | GAME_BORDER_DRAW_BOTTOM | GAME_BORDER_DRAW_LEFT | GAME_BORDER_DRAW_RIGHT | GAME_BORDER_DRAW_LARGE);
 }
 
 void game_clear_field(void)
 {
-	// clear screen 2
 	ws_screen_fill_tiles(&wse_screen2, 0x000 | WS_SCREEN_ATTR_BANK(0) | WS_SCREEN_ATTR_PALETTE(0), 0, 0, WS_SCREEN_WIDTH_TILES, WS_SCREEN_HEIGHT_TILES);
-
-	// draw borders
-	ws_screen_fill_tiles(&wse_screen2, GAME_BORDER_FIRST_TILE_INDEX | WS_SCREEN_ATTR_BANK(0) | WS_SCREEN_ATTR_PALETTE(8), 0, 0, WS_DISPLAY_WIDTH_TILES, 1);
-	ws_screen_fill_tiles(&wse_screen2, GAME_BORDER_FIRST_TILE_INDEX | WS_SCREEN_ATTR_BANK(0) | WS_SCREEN_ATTR_PALETTE(8), 0, 1, 1, WS_DISPLAY_HEIGHT_TILES - 1);
-	ws_screen_fill_tiles(&wse_screen2, GAME_BORDER_FIRST_TILE_INDEX | WS_SCREEN_ATTR_BANK(0) | WS_SCREEN_ATTR_PALETTE(8), WS_DISPLAY_WIDTH_TILES - 1, 1, 1, WS_DISPLAY_HEIGHT_TILES - 1);
+	game_draw_border_lines(GAME_BORDER_DRAW_TOP | GAME_BORDER_DRAW_LEFT | GAME_BORDER_DRAW_RIGHT | GAME_BORDER_DRAW_LARGE);
 }
 
 void game_clear_results(void)

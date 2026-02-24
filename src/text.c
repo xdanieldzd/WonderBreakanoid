@@ -69,7 +69,12 @@ void text_flush(void)
 			for (uint8_t j = 0; j < text_buffers[i].length; j++)
 			{
 				if ((*sprite_data & WS_SPRITE_ATTR_TILE_MASK) != 0x000)
-					sprite_set(&position, sprite_data);
+				{
+					if (!text_buffers[i].sprites_have_priority)
+						sprite_set(&position, sprite_data);
+					else
+						sprite_insert_first(&position, sprite_data);
+				}
 
 				position.x.high += 8;
 				sprite_data++;

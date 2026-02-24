@@ -1,8 +1,9 @@
 #pragma once
 
-#define TEXT_MAX_BUFFERS		(16)
-#define TEXT_FLAGS_BACKGROUND	(0 << 0)
-#define TEXT_FLAGS_SPRITES		(1 << 0)
+#define TEXT_MAX_BUFFERS			(16)
+#define TEXT_FLAGS_BACKGROUND		(0 << 0)
+#define TEXT_FLAGS_SPRITES			(1 << 0)
+#define TEXT_FLAGS_SPRITES_HAVE_PRIO	(2 << 0)
 
 typedef struct
 {
@@ -15,7 +16,8 @@ typedef struct
 		struct
 		{
 			unsigned is_sprite_text : 1;
-			unsigned unused : 7;
+			unsigned sprites_have_priority : 1;
+			unsigned unused : 6;
 		};
 		uint8_t flags;
 	};

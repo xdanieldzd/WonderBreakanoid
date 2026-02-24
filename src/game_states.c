@@ -156,43 +156,48 @@ void game_main_gameplay_init(void)
 
 	game_begin();
 
+	game_work->timer = SECONDS(3);
+
 	game_fade_in_from(FADE_MODE_WHITE, 25, 16, NULL);
 	game_work->next_state = GAME_STATE_GAMEPLAY;
 }
 
 void game_main_gameplay(void)
 {
-	if (!game_work->has_round_ended && game_work->buttons.pressed & WS_KEY_START)
+	if (game_work->timer == 0)
 	{
-		const uint8_t ignored_pal = 15;
-		if (!game_work->is_paused) game_fade_out_to(FADE_MODE_BLACK, 75, 4, &ignored_pal);
-		else game_fade_in_from(FADE_MODE_BLACK, 75, 4, &ignored_pal);
+		if (!game_work->has_round_ended && game_work->buttons.pressed & WS_KEY_START)
+		{
+			const uint8_t ignored_pal = 15;
+			if (!game_work->is_paused) game_fade_out_to(FADE_MODE_BLACK, WS_REFRESH_RATE_APPROX, 4, &ignored_pal);
+			else game_fade_in_from(FADE_MODE_BLACK, WS_REFRESH_RATE_APPROX, 4, &ignored_pal);
 
-		game_work->is_paused = !game_work->is_paused;
-	}
+			game_work->is_paused = !game_work->is_paused;
+		}
 
-	if (game_work->debug_enable && game_work->buttons.pressed & WS_KEY_Y1)
-	{
-		*WS_DISPLAY_COLOR_MEM(0) = WS_RGB(15, 0, 0);
-		for (uint8_t i = 0; i < GAME_BALLS_MAX_COUNT; i++)
-			if (game_work->ball[i].is_alive)
-				game_work->ball[i].is_piercing = 1;
-	}
+		if (game_work->debug_enable && game_work->buttons.pressed & WS_KEY_Y1)
+		{
+			*WS_DISPLAY_COLOR_MEM(0) = WS_RGB(15, 0, 0);
+			for (uint8_t i = 0; i < GAME_BALLS_MAX_COUNT; i++)
+				if (game_work->ball[i].is_alive)
+					game_work->ball[i].is_piercing = 1;
+		}
 
-	if (game_work->debug_enable && game_work->buttons.pressed & WS_KEY_Y3)
-	{
-		*WS_DISPLAY_COLOR_MEM(0) = WS_RGB(0, 15, 0);
-		for (uint8_t i = 0; i < GAME_BRICKS_MAX_COUNT; i++)
-			game_work->bricks[i].is_alive = 0;
-		game_work->score += 1000;
-		game_update_bricks();
+		if (game_work->debug_enable && game_work->buttons.pressed & WS_KEY_Y3)
+		{
+			*WS_DISPLAY_COLOR_MEM(0) = WS_RGB(0, 15, 0);
+			for (uint8_t i = 0; i < GAME_BRICKS_MAX_COUNT; i++)
+				game_work->bricks[i].is_alive = 0;
+			game_work->score += 1000;
+			game_update_bricks();
+		}
 	}
 
 	if (game_work->has_round_ended)
 	{
 		game_work->next_state = GAME_STATE_NEXT_LEVEL_INIT;
 	}
-	else if (!game_work->is_paused)
+	else if (!game_work->is_paused && game_work->timer == 0)
 	{
 		for (uint8_t i = 0; i < GAME_BALLS_MAX_COUNT; i++)
 		{
@@ -335,6 +340,8 @@ void game_main_next_level(void)
 
 		game_begin();
 
+		game_work->timer = SECONDS(3);
+
 		game_fade_in_from(FADE_MODE_WHITE, 25, 16, NULL);
 		game_work->next_state = GAME_STATE_GAMEPLAY;
 	}
@@ -388,12 +395,12 @@ void game_main_score_entry(void)
 		if (game_work->buttons.pressed & WS_KEY_X4) game_work->score_entry.cursor_x_position--;
 
 		game_work->score_entry.cursor_x_position %= GAME_NAME_ENTRY_GRID_SIZE;
-		game_work->score_entry.cursor_y_position %= (strlen(game_work->score_entry.is_lowercase ? score_entry_character_list_lower : score_entry_character_list_upper) / GAME_NAME_ENTRY_GRID_SIZE);
+		game_work->score_entry.cursor_y_position %= (strlen(game_work->score_entry.is_lowercase ? str_scoreentry_character_list_lower : str_scoreentry_character_list_upper) / GAME_NAME_ENTRY_GRID_SIZE);
 	}
 
 	if (game_work->buttons.pressed & WS_KEY_A)
 	{
-		game_work->score_entry.name_entry[game_work->score_entry.name_entry_index] = (game_work->score_entry.is_lowercase ? score_entry_character_list_lower : score_entry_character_list_upper)[game_work->score_entry.cursor_y_position * GAME_NAME_ENTRY_GRID_SIZE + game_work->score_entry.cursor_x_position];
+		game_work->score_entry.name_entry[game_work->score_entry.name_entry_index] = (game_work->score_entry.is_lowercase ? str_scoreentry_character_list_lower : str_scoreentry_character_list_upper)[game_work->score_entry.cursor_y_position * GAME_NAME_ENTRY_GRID_SIZE + game_work->score_entry.cursor_x_position];
 		if (game_work->score_entry.name_entry_index < SRAM_HISCORE_NAME_LENGTH - 2) game_work->score_entry.name_entry_index++;
 	}
 
@@ -467,9 +474,9 @@ void game_draw_title_screen(void)
 	text_print(4, 4, TEXT_FLAGS_SPRITES, str_title_tagline_1);
 	text_print(WS_DISPLAY_WIDTH_PIXELS - GAME_STRING_WIDTH_PIXELS(str_title_tagline_2) - 4, 12, TEXT_FLAGS_SPRITES, str_title_tagline_2);
 
-	if ((vbl_ticks % 75) >= 15)
+	if ((vbl_ticks % WS_REFRESH_RATE_APPROX) >= 15)
 	{
-		if ((vbl_ticks % (75 * 2)) < 75)
+		if ((vbl_ticks % (WS_REFRESH_RATE_APPROX * 2)) < WS_REFRESH_RATE_APPROX)
 			text_print(GAME_MESSAGE_X_POSITION(str_title_press_start), 104, TEXT_FLAGS_SPRITES, str_title_press_start);
 		else
 			text_print(GAME_MESSAGE_X_POSITION(str_title_press_y3_scores), 104, TEXT_FLAGS_SPRITES, str_title_press_y3_scores);
@@ -493,7 +500,7 @@ void game_draw_score_table_init(void)
 
 void game_draw_score_table(void)
 {
-	if ((vbl_ticks % 75) >= 15)
+	if ((vbl_ticks % WS_REFRESH_RATE_APPROX) >= 15)
 		text_print(GAME_MESSAGE_X_POSITION(str_hiscores_press_y3_exit), 120, TEXT_FLAGS_SPRITES, str_hiscores_press_y3_exit);
 }
 
@@ -504,15 +511,34 @@ void game_draw_gameplay_init(void)
 
 void game_draw_gameplay(void)
 {
-	if ((vbl_ticks % (75 * 4)) < (75 * 2))
-		text_print(1, 0, TEXT_FLAGS_BACKGROUND, str_lives, game_work->lives < 0 ? 0 :game_work->lives);
+	text_print(11, 0, TEXT_FLAGS_BACKGROUND, str_score, game_work->score);
+
+	if (game_work->timer == 0)
+	{
+		if (game_work->is_paused)
+		{
+			if ((vbl_ticks % WS_REFRESH_RATE_APPROX) >= 15)
+				text_print(GAME_MESSAGE_X_POSITION(str_paused), GAME_MESSAGE_Y_POSITION, TEXT_FLAGS_SPRITES | TEXT_FLAGS_SPRITES_HAVE_PRIO, str_paused);
+
+			text_print(32, GAME_MESSAGE_Y_POSITION + 12, TEXT_FLAGS_SPRITES | TEXT_FLAGS_SPRITES_HAVE_PRIO, str_level, game_work->level + 1);
+			text_print(112, GAME_MESSAGE_Y_POSITION + 12, TEXT_FLAGS_SPRITES | TEXT_FLAGS_SPRITES_HAVE_PRIO, str_lives, game_work->lives < 0 ? 0 : game_work->lives);
+		}
+	}
 	else
-		text_print(1, 0, TEXT_FLAGS_BACKGROUND, str_level, game_work->level + 1);
+	{
+		if (game_work->timer >= SECONDS(1))
+		{
+			if ((vbl_ticks % WS_REFRESH_RATE_APPROX) >= 15)
+			{
+				text_print(GAME_MESSAGE_X_POSITION(str_get_ready), GAME_MESSAGE_Y_POSITION, TEXT_FLAGS_SPRITES | TEXT_FLAGS_SPRITES_HAVE_PRIO, str_get_ready);
+			}
+		}
+		else
+			text_print(GAME_MESSAGE_X_POSITION(str_go), GAME_MESSAGE_Y_POSITION, TEXT_FLAGS_SPRITES | TEXT_FLAGS_SPRITES_HAVE_PRIO, str_go);
 
-	text_print(13, 0, TEXT_FLAGS_BACKGROUND, str_score, game_work->score);
-
-	if (game_work->is_paused && (vbl_ticks % 75) >= 15)
-		text_print(GAME_MESSAGE_X_POSITION(str_paused), GAME_MESSAGE_Y_POSITION, TEXT_FLAGS_SPRITES, str_paused);
+		text_print(32, GAME_MESSAGE_Y_POSITION + 12, TEXT_FLAGS_SPRITES | TEXT_FLAGS_SPRITES_HAVE_PRIO, str_level, game_work->level + 1);
+		text_print(112, GAME_MESSAGE_Y_POSITION + 12, TEXT_FLAGS_SPRITES | TEXT_FLAGS_SPRITES_HAVE_PRIO, str_lives, game_work->lives < 0 ? 0 : game_work->lives);
+	}
 
 	sprite_set_multi(&game_work->paddle.position, (struct vec2_s) { .x.high = 8, .y.high = 0 }, game_work->paddle.tile_data, ARRAY_LENGTH(game_work->paddle.tile_data));
 
@@ -552,7 +578,7 @@ void game_draw_score_entry_init(void)
 	text_print(5, 0, TEXT_FLAGS_BACKGROUND, str_scoreentry_header);
 	text_print(2, 2, TEXT_FLAGS_BACKGROUND, str_scoreentry_entry, game_work->score, game_work->level + 1);
 
-	const char __far * ptr = game_work->score_entry.is_lowercase ? score_entry_character_list_lower : score_entry_character_list_upper;
+	const char __far * ptr = game_work->score_entry.is_lowercase ? str_scoreentry_character_list_lower : str_scoreentry_character_list_upper;
 	uint8_t i = 0;
 
 	for (; *ptr != '\0'; ptr++)

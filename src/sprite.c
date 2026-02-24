@@ -40,6 +40,17 @@ void sprite_set_multi(const vec2* position, const vec2 pos_increment, const uint
 	}
 }
 
+void sprite_insert_first(const vec2* position, const uint16_t* tile_data)
+{
+	for (uint8_t i = sprite_count; i > 0; i--)
+		sprite_table->entry[i] = sprite_table->entry[i - 1];
+
+	sprite_table->entry[0].x = position->x.high;
+	sprite_table->entry[0].y = position->y.high;
+	sprite_table->entry[0].attr = *tile_data;
+	sprite_count++;
+}
+
 void sprite_flush(void)
 {
 	outportb(WS_SPR_COUNT_PORT, sprite_count);

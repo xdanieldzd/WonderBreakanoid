@@ -44,6 +44,12 @@
 #define GAME_BALL_RADIUS					(3)
 #define GAME_BALL_MAX_VELOCITY				(0x0400)
 
+#define GAME_BORDER_DRAW_LEFT				(1 << 0)
+#define GAME_BORDER_DRAW_RIGHT				(1 << 1)
+#define GAME_BORDER_DRAW_TOP					(1 << 2)
+#define GAME_BORDER_DRAW_BOTTOM				(1 << 3)
+#define GAME_BORDER_DRAW_LARGE				(1 << 4)
+
 #define GAME_BRICK_FLAGS_COLOR_NONE			(0x00)
 #define GAME_BRICK_FLAGS_COLOR_WHITE			(0x01)
 #define GAME_BRICK_FLAGS_COLOR_RED			(0x02)
@@ -58,9 +64,9 @@
 #define GAME_PLAYFIELD_MAX_X_POSITION			(WS_DISPLAY_WIDTH_PIXELS - 16)
 #define GAME_PLAYFIELD_MAX_Y_POSITION			(WS_DISPLAY_HEIGHT_PIXELS)
 
-#define GAME_STRING_WIDTH_PIXELS(str)			(strlen(str) * 8)
+#define GAME_STRING_WIDTH_PIXELS(str)			(strlen(str) * WS_DISPLAY_TILE_WIDTH)
 #define GAME_MESSAGE_X_POSITION(str)			HALF(WS_DISPLAY_WIDTH_PIXELS - GAME_STRING_WIDTH_PIXELS(str))
-#define GAME_MESSAGE_Y_POSITION				(HALF(WS_DISPLAY_HEIGHT_PIXELS) - 20)
+#define GAME_MESSAGE_Y_POSITION				(HALF(WS_DISPLAY_HEIGHT_PIXELS) - 12)
 
 #define GAME_NAME_ENTRY_GRID_X_POSITION		(3)
 #define GAME_NAME_ENTRY_GRID_Y_POSITION		(7)
@@ -165,6 +171,7 @@ typedef struct game_s
 	uint8_t current_state;
 	uint8_t next_state;
 
+	uint8_t timer;
 	uint8_t background;
 	uint8_t graphics;
 
@@ -211,6 +218,7 @@ void game_fade_in_from(const uint8_t mode, const uint8_t divider, const uint8_t 
 void game_fade_out_to(const uint8_t mode, const uint8_t divider, const uint8_t until, const uint8_t* ignored_pal);
 void game_load_graphics(uint8_t graphics);
 void game_load_background(uint8_t background);
+void game_draw_border_lines(uint8_t data);
 void game_clear_screen_with_border(void);
 void game_clear_field(void);
 void game_clear_results(void);

@@ -3,6 +3,7 @@
 #define ARRAY_LENGTH(array)		(*(&array + 1) - array)
 
 #define WS_REFRESH_RATE_APPROX	(75)
+#define SECONDS(sec)			(WS_REFRESH_RATE_APPROX * sec)
 
 extern volatile uint16_t vbl_ticks;
 
