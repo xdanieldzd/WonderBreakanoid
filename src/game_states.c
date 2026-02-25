@@ -25,6 +25,8 @@ const __far state_function game_main_functions[] =
 	game_main_startup,
 	game_main_title_screen_init,
 	game_main_title_screen,
+	game_main_menu_init,
+	game_main_menu,
 	game_main_score_table_init,
 	game_main_score_table,
 	game_main_gameplay_init,
@@ -40,6 +42,8 @@ const __far state_function game_draw_functions[] =
 	game_draw_startup,
 	game_draw_title_screen_init,
 	game_draw_title_screen,
+	game_draw_menu_init,
+	game_draw_menu,
 	game_draw_score_table_init,
 	game_draw_score_table,
 	game_draw_gameplay_init,
@@ -93,20 +97,10 @@ void game_main_title_screen(void)
 	{
 		if (game_work->buttons.pressed & WS_KEY_START)
 		{
-			game_clear_results();
-
 			game_work->do_process_text_sprites = 0;
 
 			game_fade_out_to(FADE_MODE_WHITE, 25, 16, NULL);
-			game_work->next_state = GAME_STATE_GAMEPLAY_INIT;
-		}
-
-		if (game_work->buttons.pressed & WS_KEY_Y3)
-		{
-			game_work->do_process_text_sprites = 0;
-
-			game_fade_out_to(FADE_MODE_WHITE, 25, 16, NULL);
-			game_work->next_state = GAME_STATE_SCORE_TABLE_INIT;
+			game_work->next_state = GAME_STATE_MENU_INIT;
 		}
 
 		if (game_work->debug_enable && (game_work->buttons.pressed & GAME_SRAM_RESET_KEYS) == GAME_SRAM_RESET_KEYS)
@@ -114,6 +108,60 @@ void game_main_title_screen(void)
 			sram_perform_reset();
 			game_work->sram_was_damaged = 1;
 		}
+	}
+}
+
+void game_main_menu_init(void)
+{
+	game_work->do_process_text_sprites = 1;
+
+	game_load_graphics(game_work->graphics = 1);
+	game_load_background(game_work->background = 1);
+
+	game_work->main_menu.item_index = 0;
+	game_work->main_menu.item_count = 3;
+
+	game_work->main_menu.item_states[0] = GAME_STATE_GAMEPLAY_INIT;
+	game_work->main_menu.item_states[1] = GAME_STATE_SCORE_TABLE_INIT;
+	game_work->main_menu.item_states[2] = GAME_STATE_TITLE_SCREEN_INIT;
+
+	strcpy(game_work->main_menu.item_labels[0], str_menu_start_game);
+	strcpy(game_work->main_menu.item_labels[1], str_menu_hiscores);
+	strcpy(game_work->main_menu.item_labels[2], str_menu_exit);
+
+	game_fade_in_from(FADE_MODE_WHITE, 25, 16, NULL);
+
+	game_work->next_state = GAME_STATE_MENU;
+}
+
+void game_main_menu(void)
+{
+	if (game_work->buttons.pressed & WS_KEY_X1)
+	{
+		game_work->main_menu.item_index--;
+		if (game_work->main_menu.item_index < 0) game_work->main_menu.item_index = game_work->main_menu.item_count - 1;
+	}
+
+	if (game_work->buttons.pressed & WS_KEY_X3)
+	{
+		game_work->main_menu.item_index++;
+		if (game_work->main_menu.item_index >= game_work->main_menu.item_count) game_work->main_menu.item_index = 0;
+	}
+
+	if (game_work->buttons.pressed & (WS_KEY_START | WS_KEY_A))
+	{
+		game_work->do_process_text_sprites = 0;
+
+		game_fade_out_to(FADE_MODE_WHITE, 25, 16, NULL);
+		game_work->next_state = game_work->main_menu.item_states[game_work->main_menu.item_index];
+	}
+
+	if (game_work->buttons.pressed & WS_KEY_B)
+	{
+		game_work->do_process_text_sprites = 0;
+
+		game_fade_out_to(FADE_MODE_WHITE, 25, 16, NULL);
+		game_work->next_state = GAME_STATE_TITLE_SCREEN_INIT;
 	}
 }
 
@@ -133,12 +181,12 @@ void game_main_score_table_init(void)
 
 void game_main_score_table(void)
 {
-	if (game_work->buttons.pressed & (WS_KEY_Y3 | WS_KEY_START))
+	if (game_work->buttons.pressed & (WS_KEY_A | WS_KEY_START))
 	{
 		game_work->do_process_text_sprites = 0;
 
 		game_fade_out_to(FADE_MODE_WHITE, 25, 16, NULL);
-		game_work->next_state = GAME_STATE_TITLE_SCREEN_INIT;
+		game_work->next_state = GAME_STATE_MENU_INIT;
 	}
 }
 
@@ -475,18 +523,37 @@ void game_draw_title_screen(void)
 	text_print(WS_DISPLAY_WIDTH_PIXELS - GAME_STRING_WIDTH_PIXELS(str_title_tagline_2) - 4, 12, TEXT_FLAGS_SPRITES, str_title_tagline_2);
 
 	if ((vbl_ticks % WS_REFRESH_RATE_APPROX) >= 15)
-	{
-		if ((vbl_ticks % (WS_REFRESH_RATE_APPROX * 2)) < WS_REFRESH_RATE_APPROX)
-			text_print(GAME_MESSAGE_X_POSITION(str_title_press_start), 104, TEXT_FLAGS_SPRITES, str_title_press_start);
-		else
-			text_print(GAME_MESSAGE_X_POSITION(str_title_press_y3_scores), 104, TEXT_FLAGS_SPRITES, str_title_press_y3_scores);
-	}
+		text_print(GAME_MESSAGE_X_POSITION(str_title_press_start), 104, TEXT_FLAGS_SPRITES, str_title_press_start);
 
 	text_print(GAME_MESSAGE_X_POSITION(str_title_credits_1), 124, TEXT_FLAGS_SPRITES, str_title_credits_1);
 	text_print(GAME_MESSAGE_X_POSITION(str_title_credits_2), 132, TEXT_FLAGS_SPRITES, str_title_credits_2);
 
 	if (game_work->sram_was_damaged) text_print(0, 0, TEXT_FLAGS_BACKGROUND, str_sram_reset);
 	if (game_work->debug_enable) text_print(0, 11, TEXT_FLAGS_BACKGROUND, str_dbg_version, build_date);
+}
+
+void game_draw_menu_init(void)
+{
+	//
+}
+
+void game_draw_menu(void)
+{
+	text_print(4, 4, TEXT_FLAGS_SPRITES, str_title_tagline_1);
+	text_print(WS_DISPLAY_WIDTH_PIXELS - GAME_STRING_WIDTH_PIXELS(str_title_tagline_2) - 4, 12, TEXT_FLAGS_SPRITES, str_title_tagline_2);
+
+	uint8_t y = WS_DISPLAY_HEIGHT_PIXELS - 20 - ((game_work->main_menu.item_count - game_work->main_menu.item_index) * 10);
+	text_print(36, y, TEXT_FLAGS_SPRITES, (const char __far*)&"\x7F");
+	text_print(WS_DISPLAY_WIDTH_PIXELS - 36 - WS_DISPLAY_TILE_WIDTH, y, TEXT_FLAGS_SPRITES, (const char __far*)&"\x7F");
+
+	for (uint8_t i = 0; i < game_work->main_menu.item_count; i++)
+	{
+		y = WS_DISPLAY_HEIGHT_PIXELS - 20 - (((game_work->main_menu.item_count - i) * 10));
+		text_print(GAME_MESSAGE_X_POSITION(game_work->main_menu.item_labels[i]), y, TEXT_FLAGS_SPRITES, game_work->main_menu.item_labels[i]);
+	}
+
+	if ((vbl_ticks % WS_REFRESH_RATE_APPROX) >= 15)
+		text_print(GAME_MESSAGE_X_POSITION(str_menu_press_a_start), 128, TEXT_FLAGS_SPRITES, str_menu_press_a_start);
 }
 
 void game_draw_score_table_init(void)
@@ -501,7 +568,7 @@ void game_draw_score_table_init(void)
 void game_draw_score_table(void)
 {
 	if ((vbl_ticks % WS_REFRESH_RATE_APPROX) >= 15)
-		text_print(GAME_MESSAGE_X_POSITION(str_hiscores_press_y3_exit), 120, TEXT_FLAGS_SPRITES, str_hiscores_press_y3_exit);
+		text_print(GAME_MESSAGE_X_POSITION(str_hiscores_press_to_exit), 120, TEXT_FLAGS_SPRITES, str_hiscores_press_to_exit);
 }
 
 void game_draw_gameplay_init(void)

@@ -10,6 +10,9 @@
 #define GAME_DEBUG_ENABLE_KEYS				(WS_KEY_Y1 | WS_KEY_A)
 #define GAME_SRAM_RESET_KEYS					(WS_KEY_Y2 | WS_KEY_Y4)
 
+#define GAME_MENU_ENTRY_MAX_COUNT				(4)
+#define GAME_MENU_LABEL_MAX_LENGTH			(16)
+
 #define GAME_PADDLE_FIRST_TILE_INDEX			(0x060)
 #define GAME_PADDLE_TILE_COUNT				(5)
 #define GAME_PADDLE_PALETTE_INDEX				(8)
@@ -161,6 +164,14 @@ typedef struct score_entry_s
 	char name_entry[SRAM_HISCORE_NAME_LENGTH];
 } score_entry;
 
+typedef struct main_menu_s
+{
+	int8_t item_index;
+	uint8_t item_count;
+	uint8_t item_states[GAME_MENU_ENTRY_MAX_COUNT];
+	char item_labels[GAME_MENU_ENTRY_MAX_COUNT][GAME_MENU_LABEL_MAX_LENGTH];
+} main_menu;
+
 typedef struct game_s
 {
 	uint16_t random_seed;
@@ -170,6 +181,8 @@ typedef struct game_s
 
 	uint8_t current_state;
 	uint8_t next_state;
+
+	main_menu main_menu;
 
 	uint8_t timer;
 	uint8_t background;
@@ -204,8 +217,6 @@ extern game* game_work;
 extern const uint8_t __far* level_data[6];
 
 extern const uint8_t brick_score_values[5];
-extern const char __far score_entry_character_list_upper[33];
-extern const char __far score_entry_character_list_lower[33];
 
 void game_init(void);
 void game_main(void);
