@@ -632,7 +632,7 @@ void game_draw_next_level_init(void)
 	if (game_work->player_has_won)
 	{
 		text_print(GAME_MESSAGE_X_POSITION(str_level_complete), GAME_MESSAGE_Y_POSITION, TEXT_FLAGS_SPRITES, str_level_complete);
-		text_print(GAME_MESSAGE_X_POSITION(str_press_retry), GAME_MESSAGE_Y_POSITION + 10, TEXT_FLAGS_SPRITES, str_press_retry);
+		text_print(GAME_MESSAGE_X_POSITION(str_press_continue), GAME_MESSAGE_Y_POSITION + 10, TEXT_FLAGS_SPRITES, str_press_continue);
 	}
 	else
 	{

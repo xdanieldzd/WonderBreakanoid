@@ -10,6 +10,7 @@ const char __far str_lives[] = " Lives %02u ";
 const char __far str_level[] = " Round %02u ";
 const char __far str_level_complete[] = "Round Complete";
 const char __far str_press_retry[] = "Press Start to Retry";
+const char __far str_press_continue[] = "Press Start to Continue";
 const char __far str_game_over[] = "Game Over!";
 const char __far str_paused[] = "Game Paused";
 const char __far str_get_ready[] = "Get Ready!";

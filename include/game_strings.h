@@ -12,6 +12,7 @@ extern const char __far str_lives[];
 extern const char __far str_level[];
 extern const char __far str_level_complete[];
 extern const char __far str_press_retry[];
+extern const char __far str_press_continue[];
 extern const char __far str_game_over[];
 extern const char __far str_paused[];
 extern const char __far str_get_ready[];
