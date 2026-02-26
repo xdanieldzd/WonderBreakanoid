@@ -79,8 +79,8 @@ void game_main_title_screen_init(void)
 
 	sram_store_to_cartridge();
 
-	game_load_graphics(game_work->graphics = 1);
-	game_load_background(game_work->background = 1);
+	game_work->next_graphics = GAME_FOREGROUND_TITLE_SCREEN;
+	game_work->next_background = GAME_BACKGROUND_EVENING_LAKE;
 
 	game_fade_in_from(FADE_MODE_WHITE, 25, 16, NULL);
 
@@ -115,8 +115,8 @@ void game_main_menu_init(void)
 {
 	game_work->do_process_text_sprites = 1;
 
-	game_load_graphics(game_work->graphics = 1);
-	game_load_background(game_work->background = 1);
+	game_work->next_graphics = GAME_FOREGROUND_TITLE_SCREEN;
+	game_work->next_background = GAME_BACKGROUND_EVENING_LAKE;
 
 	game_work->main_menu.item_index = 0;
 	game_work->main_menu.item_count = 3;
@@ -179,8 +179,8 @@ void game_main_score_table_init(void)
 {
 	game_work->do_process_text_sprites = 1;
 
-	game_load_graphics(game_work->graphics = 0);
-	game_load_background(game_work->background = 2);
+	game_work->next_graphics = GAME_FOREGROUND_INGAME;
+	game_work->next_background = GAME_BACKGROUND_BRIGHT_MOUNTAIN;
 
 	game_clear_screen_with_border();
 
@@ -204,8 +204,8 @@ void game_main_gameplay_init(void)
 {
 	game_work->do_process_text_sprites = 1;
 
-	game_load_graphics(game_work->graphics = 0);
-	game_load_background(game_work->background = 0);
+	game_work->next_graphics = GAME_FOREGROUND_INGAME;
+	game_work->next_background = GAME_BACKGROUND_SUNNY_DAY_LAKE;
 
 	game_clear_results();
 	game_clear_field();
@@ -388,8 +388,8 @@ void game_main_next_level(void)
 	{
 		game_work->do_process_text_sprites = 1;
 
-		game_load_graphics(game_work->graphics = 0);
-		game_load_background(game_work->background = 0);
+		game_work->next_graphics = GAME_FOREGROUND_INGAME;
+		game_work->next_background = GAME_BACKGROUND_SUNNY_DAY_LAKE;
 
 		if (game_work->player_has_won)
 		{
@@ -427,8 +427,8 @@ void game_main_score_entry_init(void)
 {
 	game_work->do_process_text_sprites = 1;
 
-	game_load_graphics(game_work->graphics = 0);
-	game_load_background(game_work->background = 2);
+	game_work->next_graphics = GAME_FOREGROUND_INGAME;
+	game_work->next_background = GAME_BACKGROUND_BRIGHT_MOUNTAIN;
 
 	memcpy(game_work->score_entry.name_entry, sram_empty_hiscore_name, sizeof(char) * SRAM_HISCORE_NAME_LENGTH);
 

@@ -18,6 +18,19 @@
 
 game* game_work = NULL;
 
+const graphics_data background_graphics[3] =
+{
+	(struct graphics_data_s) { .tiles = gfx_game_background_1_tiles, .palette = gfx_game_background_1_palette, .map = gfx_game_background_1_map, .tiles_size = gfx_game_background_1_tiles_size, .palette_size = gfx_game_background_1_palette_size, .map_size = gfx_game_background_1_map_size },
+	(struct graphics_data_s) { .tiles = gfx_game_background_2_tiles, .palette = gfx_game_background_2_palette, .map = gfx_game_background_2_map, .tiles_size = gfx_game_background_2_tiles_size, .palette_size = gfx_game_background_2_palette_size, .map_size = gfx_game_background_2_map_size },
+	(struct graphics_data_s) { .tiles = gfx_game_background_3_tiles, .palette = gfx_game_background_3_palette, .map = gfx_game_background_3_map, .tiles_size = gfx_game_background_3_tiles_size, .palette_size = gfx_game_background_3_palette_size, .map_size = gfx_game_background_3_map_size }
+};
+
+const graphics_data foreground_graphics[2] =
+{
+	(struct graphics_data_s) { .tiles = gfx_game_title_tiles, .palette = gfx_game_title_palette, .map = gfx_game_title_map, .tiles_size = gfx_game_title_tiles_size, .palette_size = gfx_game_title_palette_size, .map_size = gfx_game_title_map_size },
+	(struct graphics_data_s) { .tiles = gfx_game_graphics_tiles, .palette = gfx_game_graphics_palette, .map = NULL, .tiles_size = gfx_game_graphics_tiles_size, .palette_size = gfx_game_graphics_palette_size, .map_size = 0 }
+};
+
 const uint8_t __far* level_data[6] = { game_level_data_1, game_level_data_2, game_level_data_3, game_level_data_4, game_level_data_5, game_level_data_6 };
 
 const uint8_t brick_score_values[5] = { 0, 1, 2, 3, 5 };
@@ -29,6 +42,9 @@ void game_init(void)
 
 	game_work->current_state = GAME_STATE_STARTUP;
 	game_work->debug_enable = 0;
+
+	game_work->current_background = -1;
+	game_work->current_graphics = -1;
 
 	ws_int_set_handler(WS_INT_VBLANK, game_vblank_int_handler);
 	ws_int_set_handler(WS_INT_LINE_MATCH, game_line_match_int_handler);
@@ -79,6 +95,12 @@ __attribute__((assume_ss_data, interrupt)) void __far game_vblank_int_handler(vo
 		sprite_flush();
 	}
 
+	if (game_work->current_background != game_work->next_background)
+		game_load_background(game_work->current_background = game_work->next_background);
+
+	if (game_work->current_graphics != game_work->next_graphics)
+		game_load_graphics(game_work->current_graphics = game_work->next_graphics);
+
 	if (game_work->current_state != game_work->next_state)
 		game_work->current_state = game_work->next_state;
 
@@ -96,19 +118,15 @@ __attribute__((assume_ss_data, interrupt)) void __far game_line_match_int_handle
 
 void game_fade_in_from(const uint8_t mode, const uint8_t divider, const uint8_t until, const uint8_t* ignored_pal)
 {
+	wait_for_vblank();
+
 	fade_palette_load(15, gfx_main_font_palette);
 
-	if (game_work->graphics == 0)
-		fade_palette_load(8, gfx_game_graphics_palette);
-	else if (game_work->graphics == 1)
-		fade_palette_load(8, gfx_game_title_palette);
+	if (game_work->current_graphics < ARRAY_LENGTH(foreground_graphics))
+		fade_palette_load(8, foreground_graphics[game_work->current_graphics].palette);
 
-	if (game_work->background == 0)
-		fade_palette_load(0, gfx_game_background_1_palette);
-	else if (game_work->background == 1)
-		fade_palette_load(0, gfx_game_background_2_palette);
-	else if (game_work->background == 2)
-		fade_palette_load(0, gfx_game_background_3_palette);
+	if (game_work->current_background < ARRAY_LENGTH(background_graphics))
+		fade_palette_load(0, background_graphics[game_work->current_background].palette);
 
 	fade_data.state = FADE_STATE_IN;
 	fade_data.mode = mode;
@@ -132,33 +150,19 @@ void game_fade_out_to(const uint8_t mode, const uint8_t divider, const uint8_t u
 
 void game_load_graphics(uint8_t graphics)
 {
-	if (graphics == 0)
+	if (graphics < ARRAY_LENGTH(foreground_graphics))
 	{
-		ws_gdma_copy(WS_TILE_4BPP_MEM(0x060), gfx_game_graphics_tiles, gfx_game_graphics_tiles_size);
-	}
-	else if (graphics == 1)
-	{
-		ws_gdma_copy(WS_TILE_4BPP_MEM(0x060), gfx_game_title_tiles, gfx_game_title_tiles_size);
-		ws_gdma_copy(&wse_screen2, gfx_game_title_map, gfx_game_title_map_size);
+		ws_gdma_copy(WS_TILE_4BPP_MEM(0x060), foreground_graphics[graphics].tiles, foreground_graphics[graphics].tiles_size);
+		if (foreground_graphics[graphics].map != NULL) ws_gdma_copy(&wse_screen2, foreground_graphics[graphics].map, foreground_graphics[graphics].map_size);
 	}
 }
 
 void game_load_background(uint8_t background)
 {
-	if (background == 0)
+	if (background < ARRAY_LENGTH(background_graphics))
 	{
-		ws_gdma_copy(WS_TILE_4BPP_MEM(0x100), gfx_game_background_1_tiles, gfx_game_background_1_tiles_size);
-		ws_gdma_copy(&wse_screen1, gfx_game_background_1_map, gfx_game_background_1_map_size);
-	}
-	else if (background == 1)
-	{
-		ws_gdma_copy(WS_TILE_4BPP_MEM(0x100), gfx_game_background_2_tiles, gfx_game_background_2_tiles_size);
-		ws_gdma_copy(&wse_screen1, gfx_game_background_2_map, gfx_game_background_2_map_size);
-	}
-	else if (background == 2)
-	{
-		ws_gdma_copy(WS_TILE_4BPP_MEM(0x100), gfx_game_background_3_tiles, gfx_game_background_3_tiles_size);
-		ws_gdma_copy(&wse_screen1, gfx_game_background_3_map, gfx_game_background_3_map_size);
+		ws_gdma_copy(WS_TILE_4BPP_MEM(0x100), background_graphics[background].tiles, background_graphics[background].tiles_size);
+		ws_gdma_copy(&wse_screen1, background_graphics[background].map, background_graphics[background].map_size);
 	}
 }
 

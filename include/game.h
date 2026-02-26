@@ -98,6 +98,19 @@
 #define GAME_BALLS_MAX_COUNT					(4)
 #define GAME_BRICKS_MAX_COUNT				(GAME_BRICKS_FIELD_WIDTH * GAME_BRICKS_FIELD_HEIGHT)
 
+enum GAME_FOREGROUND
+{
+	GAME_FOREGROUND_TITLE_SCREEN = 0,
+	GAME_FOREGROUND_INGAME
+};
+
+enum GAME_BACKGROUND
+{
+	GAME_BACKGROUND_SUNNY_DAY_LAKE = 0,
+	GAME_BACKGROUND_EVENING_LAKE,
+	GAME_BACKGROUND_BRIGHT_MOUNTAIN
+};
+
 typedef struct buttons_s
 {
 	uint16_t held;
@@ -172,6 +185,16 @@ typedef struct main_menu_s
 	char item_labels[GAME_MENU_ENTRY_MAX_COUNT][GAME_MENU_LABEL_MAX_LENGTH];
 } main_menu;
 
+typedef struct graphics_data_s
+{
+	const uint8_t __far* tiles;
+	const uint8_t __far* palette;
+	const uint8_t __far* map;
+	const uint16_t tiles_size;
+	const uint16_t palette_size;
+	const uint16_t map_size;
+} graphics_data;
+
 typedef struct game_s
 {
 	uint16_t random_seed;
@@ -185,8 +208,11 @@ typedef struct game_s
 	main_menu main_menu;
 
 	uint8_t timer;
-	uint8_t background;
-	uint8_t graphics;
+
+	uint8_t current_background;
+	uint8_t next_background;
+	uint8_t current_graphics;
+	uint8_t next_graphics;
 
 	paddle paddle;
 	ball ball[GAME_BALLS_MAX_COUNT];
