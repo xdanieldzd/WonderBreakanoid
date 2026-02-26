@@ -142,10 +142,20 @@ void game_main_menu(void)
 		if (game_work->main_menu.item_index < 0) game_work->main_menu.item_index = game_work->main_menu.item_count - 1;
 	}
 
+	if (game_work->buttons.pressed & WS_KEY_X2)
+	{
+		game_work->main_menu.item_index = game_work->main_menu.item_count - 1;
+	}
+
 	if (game_work->buttons.pressed & WS_KEY_X3)
 	{
 		game_work->main_menu.item_index++;
 		if (game_work->main_menu.item_index >= game_work->main_menu.item_count) game_work->main_menu.item_index = 0;
+	}
+
+	if (game_work->buttons.pressed & WS_KEY_X4)
+	{
+		game_work->main_menu.item_index = 0;
 	}
 
 	if (game_work->buttons.pressed & (WS_KEY_START | WS_KEY_A))
@@ -197,6 +207,7 @@ void game_main_gameplay_init(void)
 	game_load_graphics(game_work->graphics = 0);
 	game_load_background(game_work->background = 0);
 
+	game_clear_results();
 	game_clear_field();
 	game_spawn_bricks(level_data[game_work->level]);
 

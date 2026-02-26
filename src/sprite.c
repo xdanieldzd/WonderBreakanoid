@@ -11,7 +11,6 @@ uint8_t sprite_count = 0;
 void sprite_reset(ws_sprite_table_t* table)
 {
 	sprite_table = table;
-	memset(sprite_table, 0, sizeof(ws_sprite_t) * sprite_count);
 	sprite_count = 0;
 }
 
