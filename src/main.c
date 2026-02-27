@@ -26,7 +26,7 @@ void main(void)
 
 	game_init();
 
-	enable_interrupts(WS_INT_ENABLE_VBLANK | WS_INT_ENABLE_LINE_MATCH);
+	enable_interrupts(WS_INT_ENABLE_VBLANK);
 
 	while (1)
 	{

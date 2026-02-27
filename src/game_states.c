@@ -125,9 +125,9 @@ void game_main_menu_init(void)
 	game_work->main_menu.item_states[1] = GAME_STATE_SCORE_TABLE_INIT;
 	game_work->main_menu.item_states[2] = GAME_STATE_TITLE_SCREEN_INIT;
 
-	strcpy(game_work->main_menu.item_labels[0], str_menu_start_game);
-	strcpy(game_work->main_menu.item_labels[1], str_menu_hiscores);
-	strcpy(game_work->main_menu.item_labels[2], str_menu_exit);
+	strcpy(game_work->main_menu.item_labels[0], str_menu_start_new_game);
+	strcpy(game_work->main_menu.item_labels[1], str_menu_check_hiscores);
+	strcpy(game_work->main_menu.item_labels[2], str_menu_return_to_title);
 
 	game_fade_in_from(FADE_MODE_WHITE, 25, 16, NULL);
 
@@ -539,8 +539,8 @@ void game_draw_title_screen(void)
 	text_print(GAME_MESSAGE_X_POSITION(str_title_credits_1), 124, TEXT_FLAGS_SPRITES, str_title_credits_1);
 	text_print(GAME_MESSAGE_X_POSITION(str_title_credits_2), 132, TEXT_FLAGS_SPRITES, str_title_credits_2);
 
-	if (game_work->sram_was_damaged) text_print(0, 0, TEXT_FLAGS_BACKGROUND, str_sram_reset);
-	if (game_work->debug_enable) text_print(0, 11, TEXT_FLAGS_BACKGROUND, str_dbg_version, build_date);
+	if (game_work->sram_was_damaged) text_print(0, 0, TEXT_FLAGS_BACKGROUND, str_title_sram_reset);
+	if (game_work->debug_enable) text_print(0, 11, TEXT_FLAGS_BACKGROUND, str_title_dbg_version, build_date);
 }
 
 void game_draw_menu_init(void)
@@ -564,7 +564,7 @@ void game_draw_menu(void)
 	}
 
 	if ((vbl_ticks % WS_REFRESH_RATE_APPROX) >= 15)
-		text_print(GAME_MESSAGE_X_POSITION(str_menu_press_a_start), 128, TEXT_FLAGS_SPRITES, str_menu_press_a_start);
+		text_print(GAME_MESSAGE_X_POSITION(str_menu_press_to_select), 128, TEXT_FLAGS_SPRITES, str_menu_press_to_select);
 }
 
 void game_draw_score_table_init(void)
@@ -589,17 +589,17 @@ void game_draw_gameplay_init(void)
 
 void game_draw_gameplay(void)
 {
-	text_print(11, 0, TEXT_FLAGS_BACKGROUND, str_score, game_work->score);
+	text_print(11, 0, TEXT_FLAGS_BACKGROUND, str_ingame_score, game_work->score);
 
 	if (game_work->timer == 0)
 	{
 		if (game_work->is_paused)
 		{
 			if ((vbl_ticks % WS_REFRESH_RATE_APPROX) >= 15)
-				text_print(GAME_MESSAGE_X_POSITION(str_paused), GAME_MESSAGE_Y_POSITION, TEXT_FLAGS_SPRITES | TEXT_FLAGS_SPRITES_HAVE_PRIO, str_paused);
+				text_print(GAME_MESSAGE_X_POSITION(str_ingame_game_paused), GAME_MESSAGE_Y_POSITION, TEXT_FLAGS_SPRITES | TEXT_FLAGS_SPRITES_HAVE_PRIO, str_ingame_game_paused);
 
-			text_print(32, GAME_MESSAGE_Y_POSITION + 12, TEXT_FLAGS_SPRITES | TEXT_FLAGS_SPRITES_HAVE_PRIO, str_level, game_work->level + 1);
-			text_print(112, GAME_MESSAGE_Y_POSITION + 12, TEXT_FLAGS_SPRITES | TEXT_FLAGS_SPRITES_HAVE_PRIO, str_lives, game_work->lives < 0 ? 0 : game_work->lives);
+			text_print(32, GAME_MESSAGE_Y_POSITION + 12, TEXT_FLAGS_SPRITES | TEXT_FLAGS_SPRITES_HAVE_PRIO, str_ingame_round, game_work->level + 1);
+			text_print(112, GAME_MESSAGE_Y_POSITION + 12, TEXT_FLAGS_SPRITES | TEXT_FLAGS_SPRITES_HAVE_PRIO, str_ingame_lives, game_work->lives < 0 ? 0 : game_work->lives);
 		}
 	}
 	else
@@ -608,14 +608,14 @@ void game_draw_gameplay(void)
 		{
 			if ((vbl_ticks % WS_REFRESH_RATE_APPROX) >= 15)
 			{
-				text_print(GAME_MESSAGE_X_POSITION(str_get_ready), GAME_MESSAGE_Y_POSITION, TEXT_FLAGS_SPRITES | TEXT_FLAGS_SPRITES_HAVE_PRIO, str_get_ready);
+				text_print(GAME_MESSAGE_X_POSITION(str_ingame_get_ready), GAME_MESSAGE_Y_POSITION, TEXT_FLAGS_SPRITES | TEXT_FLAGS_SPRITES_HAVE_PRIO, str_ingame_get_ready);
 			}
 		}
 		else
-			text_print(GAME_MESSAGE_X_POSITION(str_go), GAME_MESSAGE_Y_POSITION, TEXT_FLAGS_SPRITES | TEXT_FLAGS_SPRITES_HAVE_PRIO, str_go);
+			text_print(GAME_MESSAGE_X_POSITION(str_ingame_go), GAME_MESSAGE_Y_POSITION, TEXT_FLAGS_SPRITES | TEXT_FLAGS_SPRITES_HAVE_PRIO, str_ingame_go);
 
-		text_print(32, GAME_MESSAGE_Y_POSITION + 12, TEXT_FLAGS_SPRITES | TEXT_FLAGS_SPRITES_HAVE_PRIO, str_level, game_work->level + 1);
-		text_print(112, GAME_MESSAGE_Y_POSITION + 12, TEXT_FLAGS_SPRITES | TEXT_FLAGS_SPRITES_HAVE_PRIO, str_lives, game_work->lives < 0 ? 0 : game_work->lives);
+		text_print(32, GAME_MESSAGE_Y_POSITION + 12, TEXT_FLAGS_SPRITES | TEXT_FLAGS_SPRITES_HAVE_PRIO, str_ingame_round, game_work->level + 1);
+		text_print(112, GAME_MESSAGE_Y_POSITION + 12, TEXT_FLAGS_SPRITES | TEXT_FLAGS_SPRITES_HAVE_PRIO, str_ingame_lives, game_work->lives < 0 ? 0 : game_work->lives);
 	}
 
 	sprite_set_multi(&game_work->paddle.position, (struct vec2_s) { .x.high = 8, .y.high = 0 }, game_work->paddle.tile_data, ARRAY_LENGTH(game_work->paddle.tile_data));
@@ -631,17 +631,17 @@ void game_draw_next_level_init(void)
 
 	if (game_work->player_has_won)
 	{
-		text_print(GAME_MESSAGE_X_POSITION(str_level_complete), GAME_MESSAGE_Y_POSITION, TEXT_FLAGS_SPRITES, str_level_complete);
-		text_print(GAME_MESSAGE_X_POSITION(str_press_continue), GAME_MESSAGE_Y_POSITION + 10, TEXT_FLAGS_SPRITES, str_press_continue);
+		text_print(GAME_MESSAGE_X_POSITION(str_ingame_round_complete), GAME_MESSAGE_Y_POSITION, TEXT_FLAGS_SPRITES, str_ingame_round_complete);
+		text_print(GAME_MESSAGE_X_POSITION(str_ingame_press_to_continue), GAME_MESSAGE_Y_POSITION + 10, TEXT_FLAGS_SPRITES, str_ingame_press_to_continue);
 	}
 	else
 	{
 		if (game_work->lives > 0)
-			text_print(GAME_MESSAGE_X_POSITION(str_press_retry), GAME_MESSAGE_Y_POSITION, TEXT_FLAGS_SPRITES, str_press_retry);
+			text_print(GAME_MESSAGE_X_POSITION(str_ingame_press_to_retry), GAME_MESSAGE_Y_POSITION, TEXT_FLAGS_SPRITES, str_ingame_press_to_retry);
 		else
 		{
-			text_print(GAME_MESSAGE_X_POSITION(str_game_over), GAME_MESSAGE_Y_POSITION, TEXT_FLAGS_SPRITES, str_game_over);
-			text_print(GAME_MESSAGE_X_POSITION(str_press_retry), GAME_MESSAGE_Y_POSITION + 10, TEXT_FLAGS_SPRITES, str_press_retry);
+			text_print(GAME_MESSAGE_X_POSITION(str_ingame_game_over), GAME_MESSAGE_Y_POSITION, TEXT_FLAGS_SPRITES, str_ingame_game_over);
+			text_print(GAME_MESSAGE_X_POSITION(str_ingame_press_to_retry), GAME_MESSAGE_Y_POSITION + 10, TEXT_FLAGS_SPRITES, str_ingame_press_to_retry);
 		}
 	}
 }
@@ -671,15 +671,13 @@ void game_draw_score_entry_init(void)
 
 void game_draw_score_entry(void)
 {
-	//text_print(0,0,TEXT_FLAGS_BACKGROUND,"%3u %3u",game_work->score_entry.cursor_x_position,game_work->score_entry.cursor_y_position);
-
 	for (uint8_t i = 0; i < SRAM_HISCORE_NAME_LENGTH - 1; i++)
 	{
 		text_print(
 			GAME_NAME_ENTRY_LETTERS_X_POSITION + i * WS_DISPLAY_TILE_WIDTH,
 			GAME_NAME_ENTRY_LETTERS_Y_POSITION,
 			TEXT_FLAGS_SPRITES,
-			str_fmt_char,
+			str_scoreentry_fmt_char,
 			game_work->score_entry.name_entry[i] == '\0' ? '-' : game_work->score_entry.name_entry[i]);
 
 		if (i == game_work->score_entry.name_entry_index)

@@ -47,7 +47,6 @@ void game_init(void)
 	game_work->current_graphics = -1;
 
 	ws_int_set_handler(WS_INT_VBLANK, game_vblank_int_handler);
-	ws_int_set_handler(WS_INT_LINE_MATCH, game_line_match_int_handler);
 }
 
 void game_main(void)
@@ -105,14 +104,6 @@ __attribute__((assume_ss_data, interrupt)) void __far game_vblank_int_handler(vo
 		game_work->current_state = game_work->next_state;
 
 	ws_int_ack(WS_INT_ACK_VBLANK);
-	ia16_enable_irq();
-}
-
-__attribute__((assume_ss_data, interrupt)) void __far game_line_match_int_handler(void)
-{
-	//
-
-	ws_int_ack(WS_INT_ACK_LINE_MATCH);
 	ia16_enable_irq();
 }
 
@@ -302,26 +293,16 @@ void game_move_ball(const uint8_t index)
 {
 	if (game_work->ball[index].is_on_paddle) return;
 
-	//if (!game_work->debug_enable)
-	{
-		if (game_work->ball[index].velocity.x.value >= GAME_BALL_MAX_VELOCITY) game_work->ball[index].velocity.x.value = GAME_BALL_MAX_VELOCITY;
-		if (game_work->ball[index].velocity.y.value >= GAME_BALL_MAX_VELOCITY) game_work->ball[index].velocity.y.value = GAME_BALL_MAX_VELOCITY;
-		if (game_work->ball[index].velocity.y.value > 0 && game_work->ball[index].velocity.x.value == 0) game_work->ball[index].velocity.x.low += 0x20;
+	if (game_work->ball[index].velocity.x.value >= GAME_BALL_MAX_VELOCITY) game_work->ball[index].velocity.x.value = GAME_BALL_MAX_VELOCITY;
+	if (game_work->ball[index].velocity.y.value >= GAME_BALL_MAX_VELOCITY) game_work->ball[index].velocity.y.value = GAME_BALL_MAX_VELOCITY;
+	if (game_work->ball[index].velocity.y.value > 0 && game_work->ball[index].velocity.x.value == 0) game_work->ball[index].velocity.x.low += 0x20;
 
-		vec2_add(&game_work->ball[index].position, &game_work->ball[index].velocity, &game_work->ball[index].position);
+	vec2_add(&game_work->ball[index].position, &game_work->ball[index].velocity, &game_work->ball[index].position);
 
-		if (game_work->ball[index].position.x.high >= GAME_PLAYFIELD_MAX_X_POSITION) game_work->ball[index].velocity.x.value = -abs(game_work->ball[index].velocity.x.value);
-		if (game_work->ball[index].position.x.high <= GAME_PLAYFIELD_MIN_X_POSITION) game_work->ball[index].velocity.x.value = abs(game_work->ball[index].velocity.x.value);
+	if (game_work->ball[index].position.x.high >= GAME_PLAYFIELD_MAX_X_POSITION) game_work->ball[index].velocity.x.value = -abs(game_work->ball[index].velocity.x.value);
+	if (game_work->ball[index].position.x.high <= GAME_PLAYFIELD_MIN_X_POSITION) game_work->ball[index].velocity.x.value = abs(game_work->ball[index].velocity.x.value);
 
-		if (game_work->ball[index].position.y.high <= GAME_PLAYFIELD_MIN_Y_POSITION) game_work->ball[index].velocity.y.value = -game_work->ball[index].velocity.y.value;
-	}
-	/*else
-	{
-		if (game_work->buttons.held & WS_KEY_Y1) game_work->ball[index].position.y.high -= 1;
-		if (game_work->buttons.held & WS_KEY_Y2) game_work->ball[index].position.x.high += 1;
-		if (game_work->buttons.held & WS_KEY_Y3) game_work->ball[index].position.y.high += 1;
-		if (game_work->buttons.held & WS_KEY_Y4) game_work->ball[index].position.x.high -= 1;
-	}*/
+	if (game_work->ball[index].position.y.high <= GAME_PLAYFIELD_MIN_Y_POSITION) game_work->ball[index].velocity.y.value = -game_work->ball[index].velocity.y.value;
 }
 
 uint8_t game_any_ball_alive(void)
